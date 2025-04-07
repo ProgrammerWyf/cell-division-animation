@@ -3,25 +3,23 @@ import pygame as pg
 import sys
 import math
 import random
-'''class Chrome:
-    #  f
+'''class Chrome:'''
 
-num = input("欢迎使用细胞分裂演示器 \n 王毅凡 制作于2025.4 \n 染色体数量：")
+num = int(input("欢迎使用细胞分裂演示器 \n 王毅凡 制作于2025.4 \n 染色体数量："))
 
 
 def position(number, radius, point):
-    length = (radius*2 - 10)/number
+    length = (radius*2 - 10)/number  # 改
     center = []
-    for i in range(0,number):
+    for i in range(0, number):
         center.append((point[0] - (radius - 5) + (i+0.5)*length, point[1]))
-    return [length, center]'''
+    return [length, center]
 
 radius = 270
 size = width, height = 800, 600
 origin = width / 2, height / 2
-length = 200    # position(num,radius,origin)[0]
-# center = position(num,radius,origin)[1]
-c = random.randint(0, 255)
+length = position(num, radius, origin)[0]
+center = position(num, radius, origin)[1]
 
 
 def draw_sector(screen, color, center, length):
@@ -51,34 +49,33 @@ def draw_sector(screen, color, center, length):
         y = int(center_of_arc3[1] - 0.15 * length * math.cos(math.radians(angle2)))
         p_list.append((x, y))
 
-    p_list.append(center)
     quarter1 = pg.draw.polygon(screen, color, p_list)
 
     for i in range(0, len(p_list)-1,):
-        p_list2.append((origin[0]*2 - p_list[i][0], p_list[i][1]))
+        p_list2.append((center[0]*2 - p_list[i][0], p_list[i][1]))
     quarter2 = pg.draw.polygon(screen, color, p_list2)
 
     for i in range(0, len(p_list)-1):
-        p_list3.append((p_list[i][0],origin[1]*2-p_list[i][1]))
+        p_list3.append((p_list[i][0], center[1]*2-p_list[i][1]))
     quarter3 = pg.draw.polygon(screen, color, p_list3)
 
     for i in range(0, len(p_list) - 1):
-        p_list4.append((origin[0] * 2-p_list[i][0], origin[1] * 2 - p_list[i][1]))
+        p_list4.append((center[0] * 2-p_list[i][0], center[1] * 2 - p_list[i][1]))
     quarter4 = pg.draw.polygon(screen, color, p_list4)
 
-    return [quarter1, quarter2, quarter3, quarter4, ]
+    return [quarter1, quarter2, quarter3, quarter4]
 
 pg.init()
 screen = pg.display.set_mode(size)
 screen.fill('white')
 pg.display.set_caption('Cell Division')
 pg.draw.circle(screen, (0, 0, 0), origin, radius, width=1)   # 细胞膜
-# for i in range(0, num - 1):
-draw_sector(screen, (c, c, c), origin, length)
+for i in range(0, num):
+    draw_sector(screen, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), center[i], length/2)
 
 while True:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             sys.exit()
-
+    pg.time.wait(100)  # 回头改一下
     pg.display.update()
