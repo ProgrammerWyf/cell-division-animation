@@ -1,12 +1,13 @@
-# coding:utf-8
+# -*- coding:utf-8 -*-
 import pygame as pg
 import sys
 import math
 import random
+from ctypes import windll
 
 
 class Chromosome:
-    def __init__(self):  # 不要也罢？
+    def __init__(self):
         self.p_list = []
         self.p_list2 = []
         self.p_list3 = []
@@ -14,13 +15,6 @@ class Chromosome:
         self.track = []
         self.track2 = []
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-    @classmethod
-    def position(cls, number, radius, length, point):
-        center = []
-        for i in range(0, number):
-            center.append((point[0] - (radius - 5) + (i + 0.5) * length, point[1]))
-        return center
 
     def draw_sector(self, center, length):
         self.p_list = [center]
@@ -102,20 +96,28 @@ def movement():
         pg.time.delay(20)
 
 
+def position(number, radius, length, point):
+    center = []
+    for i in range(0, number):
+        center.append((point[0] - (radius - 5) + (i + 0.5) * length, point[1]))
+    return center
+
 num = int(input("欢迎使用细胞分裂演示器\nversion 1.0 2025.4.27\n染色体数量："))
 Radius = 270
 size = width, height = 800, 600
 origin = width / 2, height / 2
 length = (Radius * 2 - 10) / num
-Center = Chromosome.position(num, Radius, length, origin)
+Center = position(num, Radius, length, origin)
+SetWindowPos = windll.user32.SetWindowPos
+chromosomes = []
 
 pg.init()
 screen = pg.display.set_mode((800, 600))
+SetWindowPos(pg.display.get_wm_info()['window'], -1, 0, 0, 0, 0, 0x0001)
 screen.fill("white")
-
 pg.display.set_caption('Cell Division')
-chromosomes = []
 
+# Init
 pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 35), (20, 10)))
 pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 35), (8, 20)))  # 上中心粒
 pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 565), (20, 10)))
@@ -132,12 +134,13 @@ while True:
             sys.exit()
         elif event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
             if key == 1:
+                pg.time.delay(1000)
                 screen.fill('white')
                 pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 35), (20, 10)))
                 pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 35), (8, 20)))  # 上中心粒
                 pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 565), (20, 10)))
                 pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 555), (8, 20)))  # 下中心粒
-                pg.draw.rect(screen, (0, 0, 0), (130, 10, 540, 580), width=5, border_radius=1)  # 细胞膜
+                pg.draw.rect(screen, (0, 0, 0), (130, 10, 540, 580), width=5, border_radius=1)  # 细胞壁
                 for i in range(0, len(Center)):
                     chromosomes.append(Chromosome())
                     chromosomes[i].draw_sector(Center[i], length / 2)
