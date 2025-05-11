@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+# -*- coding:gbk -*-
 import pygame as pg
 import sys
 import math
@@ -7,7 +7,7 @@ from ctypes import windll
 
 
 class Chromosome:
-    def __init__(self):
+    def __init__(self, target_pos):
         self.p_list = []
         self.p_list2 = []
         self.p_list3 = []
@@ -16,157 +16,198 @@ class Chromosome:
         self.track2 = []
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
+        self.start_pos = (random.randint(250, 350), random.randint(150, 450))
+        self.current_pos = self.start_pos
+        self.target_pos = target_pos
+        self.move_progress = 0.0
+
     def draw_sector(self, center, length):
         self.p_list = [center]
-        self.p_list2 = []
-        self.p_list3 = []
-        self.p_list4 = []
-
         center_of_arc1 = int(center[0] - 1.25 * length * math.sin(math.pi / 6)), int(center[1] - 1.25 * length * math.
                                                                                      cos(math.pi / 6))
-        # æŸ“è‰²ä½“ç»˜åˆ¶åŸºç¡€å‡†å¤‡
+        # È¾É«Ìå»æÖÆ»ù´¡×¼±¸
         for angle in range(29, -1, -1):
             x = int(center_of_arc1[0] + 1.25 * length * math.sin(math.radians(angle)))
             y = int(center_of_arc1[1] + 1.25 * length * math.cos(math.radians(angle)))
-            self.p_list.append((x, y))  # ç¬¬ä¸€æ®µæŸ“è‰²ä½“å¼§ç»˜åˆ¶
+            self.p_list.append((x, y))  # µÚÒ»¶ÎÈ¾É«Ìå»¡»æÖÆ
 
-        # ç¬¬äºŒæ®µæŸ“è‰²ä½“å¼§ç»˜åˆ¶
+        # µÚ¶ş¶ÎÈ¾É«Ìå»¡»æÖÆ
         center_of_arc2 = self.p_list[-1][0], self.p_list[-1][1] - 0.15 * length
         for angle2 in range(-1, 60):
             x = int(center_of_arc2[0] - 0.15 * length * math.sin(math.radians(angle2)))
             y = int(center_of_arc2[1] + 0.15 * length * math.cos(math.radians(angle2)))
             self.p_list.append((x, y))
 
-        # ç¬¬ä¸‰æ®µæŸ“è‰²ä½“å¼§ç»˜åˆ¶
+        # µÚÈı¶ÎÈ¾É«Ìå»¡»æÖÆ
         center_of_arc3 = center_of_arc2[0], center_of_arc2[1] + 0.15 * length
         for angle2 in range(45, -1, -1):
             x = int(center_of_arc3[0] - 0.15 * length * math.sin(math.radians(angle2)))
             y = int(center_of_arc3[1] - 0.15 * length * math.cos(math.radians(angle2)))
             self.p_list.append((x, y))
 
-        # å³ä¸‹è§’æŸ“è‰²ä½“ç»˜åˆ¶
-        for i in range(0, len(self.p_list)):
-            self.p_list2.append((center[0] * 2 - self.p_list[i][0], self.p_list[i][1]))
+        # ÓÒÏÂ½ÇÈ¾É«Ìå»æÖÆ
+        self.p_list2 = [(center[0] * 2 - self.p_list[i][0], self.p_list[i][1]) for i in range(0, len(self.p_list))]
 
-        # å·¦ä¸Šè§’
-        for i in range(0, len(self.p_list)):
-            self.p_list3.append((self.p_list[i][0], center[1] * 2 - self.p_list[i][1]))
+        # ×óÉÏ½Ç:
+        self.p_list3 = [(self.p_list[i][0], center[1] * 2 - self.p_list[i][1]) for i in range(0, len(self.p_list))]
 
-        # å³ä¸Šè§’
-        for i in range(0, len(self.p_list)):
-            self.p_list4.append((center[0] * 2 - self.p_list[i][0], center[1] * 2 - self.p_list[i][1]))
+        # ÓÒÉÏ½Ç
+        self.p_list4 = [(center[0] * 2 - self.p_list[i][0], center[1] * 2 - self.p_list[i][1])
+                        for i in range(0, len(self.p_list))]
 
-    def spindle(self, radius, number):
+    def spindle(self, radius, number, index):
         for j in range(1, 245):
             new_length = int(math.sqrt((radius - 5) ** 2 - j ** 2))
-            self.track.append((400 - new_length + (i + 0.5) * 2 * new_length / number, 300 - j))
-            self.track2.append((400 - new_length + (i + 0.5) * 2 * new_length / number, 300 + j))
+            x = 400 - new_length + (index + 0.5) * 2 * new_length / number
+            self.track.append((x, 300 - j))
+            self.track2.append((x, 300 + j))
 
-    def move(self, vect):
-        for j in range(0, len(self.p_list)):
-            self.p_list[j] = (self.p_list[j][0] + vect[0], self.p_list[j][1] - vect[1])
-            self.p_list2[j] = (self.p_list2[j][0] + vect[0], self.p_list2[j][1] - vect[1])
-            self.p_list3[j] = (self.p_list3[j][0] + vect[0], self.p_list3[j][1] + vect[1])
-            self.p_list4[j] = (self.p_list4[j][0] + vect[0], self.p_list4[j][1] + vect[1])
-        del self.track[0]
-        del self.track2[0]
+    def move(self, length):  # È¾É«ÌåÕûÌåÒÆ¶¯
+        if self.move_progress < 1.0:
+            self.move_progress = min(1.0, self.move_progress + 0.02)
+            t = self.move_progress
+            x = self.start_pos[0] + (self.target_pos[0] - self.start_pos[0]) * t * t
+            y = self.start_pos[1] + (self.target_pos[1] - self.start_pos[1]) * t*t
+            self.current_pos = (int(x), int(y))
+            self.draw_sector(self.current_pos, length/2)
 
 
-def movement():
-    while move < len(chromosomes[0].track) - 1:
-        screen.fill("white")
-        pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 35), (20, 10)))
-        pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 35), (8, 20)))  # ä¸Šä¸­å¿ƒç²’
-        pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 565), (20, 10)))
-        pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 555), (8, 20)))  # ä¸‹ä¸­å¿ƒç²’
-        pg.draw.rect(screen, (0, 0, 0), (130, 10, 540, 580), width=5, border_radius=1)  # ç»†èƒè†œ
-        for k in range(0, len(chromosomes)):
-            vector = (chromosomes[k].track[move + 1][0] - chromosomes[k].track[move][0], chromosomes[k].track[move + 1]
-            [1] - chromosomes[k].track[move][1])
-            chromosomes[k].move(vector)
-            pg.draw.polygon(screen, chromosomes[k].color, chromosomes[k].p_list)
-            pg.draw.polygon(screen, chromosomes[k].color, chromosomes[k].p_list2)
-            pg.draw.circle(screen, chromosomes[k].color, chromosomes[k].p_list[0], 5)
-            pg.draw.polygon(screen, chromosomes[k].color, chromosomes[k].p_list3)
-            pg.draw.polygon(screen, chromosomes[k].color, chromosomes[k].p_list4)
-            pg.draw.circle(screen, chromosomes[k].color, chromosomes[k].p_list3[0], 5)
-            pg.draw.aalines(screen, 'grey', False, chromosomes[k].track)
-            pg.draw.aalines(screen, 'grey', False, chromosomes[k].track2)
-        pg.display.update()
-        pg.time.delay(20)
+def movement(chromosomes):
+    for chrm in chromosomes:
+        vx = chrm.track[1][0] - chrm.track[0][0]
+        vy = chrm.track[1][1] - chrm.track[0][1]
+        for p in range(len(chrm.p_list)):
+            chrm.p_list[p] = (chrm.p_list[p][0] + vx, chrm.p_list[p][1] - vy)
+            chrm.p_list2[p] = (chrm.p_list2[p][0] + vx, chrm.p_list2[p][1] - vy)
+            chrm.p_list3[p] = (chrm.p_list3[p][0] + vx, chrm.p_list3[p][1] + vy)
+            chrm.p_list4[p] = (chrm.p_list4[p][0] + vx, chrm.p_list4[p][1] + vy)
+        del chrm.track[0], chrm.track2[0]
 
 
 def position(number, radius, length, point):
-    center = []
-    for i in range(0, number):
-        center.append((point[0] - (radius - 5) + (i + 0.5) * length, point[1]))
-    return center
+    return [(point[0] - (radius - 5) + (i + 0.5) * length, point[1]) for i in xrange(number)]
 
-num = int(input("æ¬¢è¿ä½¿ç”¨ç»†èƒåˆ†è£‚æ¼”ç¤ºå™¨\nversion 1.0 2025.4.27\næŸ“è‰²ä½“æ•°é‡ï¼š"))
 Radius = 270
 size = width, height = 800, 600
 origin = width / 2, height / 2
-length = (Radius * 2 - 10) / num
-Center = position(num, Radius, length, origin)
-SetWindowPos = windll.user32.SetWindowPos
-chromosomes = []
+Fade_speed = 3  # ³£Á¿ÉùÃ÷
 
-pg.init()
-screen = pg.display.set_mode((800, 600))
-SetWindowPos(pg.display.get_wm_info()['window'], -1, 0, 0, 0, 0, 0x0001)
-screen.fill("white")
-pg.display.set_caption('Cell Division')
 
-# Init
-pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 35), (20, 10)))
-pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 35), (8, 20)))  # ä¸Šä¸­å¿ƒç²’
-pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 565), (20, 10)))
-pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 555), (8, 20)))  # ä¸‹ä¸­å¿ƒç²’
-pg.draw.rect(screen, (0, 0, 0), (130, 10, 540, 580), width=5, border_radius=1)  # ç»†èƒè†œ
-pg.draw.circle(screen, 'pink3', origin, Radius - 50)  # ç»†èƒæ ¸
+def main(num):
+    move = False
+    done = True
+    key_stage = 0
+    length = (Radius * 2 - 10) / num
+    Center = position(num, Radius, length, origin)
+    chromosomes = []
+    nucleus_alpha = 255
 
-move = 2
-key = 1
+    l = 1
+    kernel = (random.randint(350, 400), random.randint(140, 160))
+    nucleus_surf = pg.Surface(size, pg.SRCALPHA)
 
-while True:
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            sys.exit()
-        elif event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
-            if key == 1:
-                pg.time.delay(1000)
-                screen.fill('white')
-                pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 35), (20, 10)))
-                pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 35), (8, 20)))  # ä¸Šä¸­å¿ƒç²’
-                pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 565), (20, 10)))
-                pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 555), (8, 20)))  # ä¸‹ä¸­å¿ƒç²’
-                pg.draw.rect(screen, (0, 0, 0), (130, 10, 540, 580), width=5, border_radius=1)  # ç»†èƒå£
-                for i in range(0, len(Center)):
-                    chromosomes.append(Chromosome())
-                    chromosomes[i].draw_sector(Center[i], length / 2)
-                    chromosomes[i].spindle(Radius, num)
-                    pg.draw.circle(screen, chromosomes[i].color, Center[i], 5)
-                    pg.draw.polygon(screen, chromosomes[i].color, chromosomes[i].p_list)
-                    pg.draw.polygon(screen, chromosomes[i].color, chromosomes[i].p_list2)
-                    pg.draw.polygon(screen, chromosomes[i].color, chromosomes[i].p_list3)
-                    pg.draw.polygon(screen, chromosomes[i].color, chromosomes[i].p_list4)
-                    pg.draw.aalines(screen, 'grey', False, chromosomes[i].track)
-                    pg.draw.aalines(screen, 'grey', False, chromosomes[i].track2)
-                pg.display.update()
-                key += 1
-            elif key == 2:
-                movement()
-                key += 1
-            elif key == 3:
-                for l in range(1, 270):
-                    pg.draw.line(screen, 'black', (400 - l, 300), (400 + l, 300), width=10)
-                    pg.display.update()
-                    pg.time.delay(20)
-                key += 1
+    clock = pg.time.Clock()
+
+    while True:
+        screen.fill("white")
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                sys.exit()
+            elif event.type == pg.KEYDOWN and event.key == pg.K_RETURN and done:
+                if key_stage == 0:
+                    chromosomes = [Chromosome(pos) for pos in Center]
+                    move = True
+                    done = False
+                    key_stage += 1
+                else:
+                    move = True
+                    done = False
+                    key_stage += 1
+
+        if key_stage < 4:
+            if move:
+                if nucleus_alpha > 0:
+                    nucleus_alpha = max(0, nucleus_alpha - Fade_speed)
+                if key_stage == 1:
+                    for index, chromo in enumerate(chromosomes):
+                        chromo.draw_sector(chromo.current_pos, length /2)
+                    done = True
+                if key_stage == 2:
+                    for idx, chromo in enumerate(chromosomes):
+                        chromo.move(length)
+                        if not chromo.track:
+                            chromo.spindle(Radius, num, idx)
+                        if chromo.move_progress == 1.0 and nucleus_alpha == 0:
+                            move = False
+                            done = True
+
+                elif key_stage == 3:
+                    movement(chromosomes)
+                    for chromo in chromosomes:
+                        pg.draw.aalines(screen, 'grey', False, chromo.track)
+                        pg.draw.aalines(screen, 'grey', False, chromo.track2)
+                    if len(chromosomes[0].track) <= 3:
+                        move = False
+                        done = True
+
+            pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 35), (20, 10)))
+            pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 35), (8, 20)))  # ÉÏÖĞĞÄÁ£
+            pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((390, 565), (20, 10)))
+            pg.draw.ellipse(screen, (100, 100, 100), pg.Rect((396, 555), (8, 20)))  # ÏÂÖĞĞÄÁ£
+            pg.draw.rect(screen, (0, 0, 0), (130, 10, 540, 580), width=5, border_radius=5)  # Ï¸°ûÄ¤
+            pg.draw.circle(nucleus_surf, (205, 145, 158, nucleus_alpha), origin, Radius - 50)
+            pg.draw.circle(nucleus_surf, (200, 155, 200, nucleus_alpha), (origin[0] - 60, origin[1] + 55), 100)
+            screen.blit(nucleus_surf, (0, 0))
+            for chromo in chromosomes:
+                pg.draw.circle(screen, chromo.color, chromo.p_list[0], 5)
+                pg.draw.polygon(screen, chromo.color, chromo.p_list)
+                pg.draw.polygon(screen, chromo.color, chromo.p_list2)
+                pg.draw.polygon(screen, chromo.color, chromo.p_list3)
+                pg.draw.polygon(screen, chromo.color, chromo.p_list4)
+                pg.draw.circle(screen, chromo.color, chromo.p_list3[0], 5)
+
+        elif key_stage == 4:
+            if move:
+                pg.draw.line(screen, 'black', (400 - l, 300), (400 + l, 300), width=10)
+                l += 1
+                if nucleus_alpha < 255:
+                    nucleus_alpha += Fade_speed
+                if l == 270:
+                    move = False
+                    done = True
             else:
-                screen.fill('white')
-                pg.draw.rect(screen, (0, 0, 0), (130, 10, 540, 290), width=5, border_radius=1)  # ç»†èƒè†œ
-                pg.draw.rect(screen, (0, 0, 0), (130, 300, 540, 290), width=5, border_radius=1)  # ç»†èƒè†œ
-                pg.draw.circle(screen, 'pink3', (400, 150), 100)
-                pg.draw.circle(screen, 'pink3', (400, 445), 100)
-    pg.display.update()
+                pg.draw.line(screen, 'black', (130, 300), (670, 300), width=10)
+            pg.draw.rect(screen, (0, 0, 0), (130, 10, 540, 580), width=5, border_radius=5)  # Ï¸°ûÄ¤
+            pg.draw.circle(nucleus_surf, (205, 145, 158, nucleus_alpha), (400, 155), (Radius - 50) / 2)
+            pg.draw.circle(nucleus_surf, (205, 145, 158, nucleus_alpha), (400, 455), (Radius - 50) / 2)
+            pg.draw.circle(nucleus_surf, (200, 155, 200, nucleus_alpha), kernel, 40)
+            pg.draw.circle(nucleus_surf, (200, 155, 200, nucleus_alpha), (kernel[0], kernel[1] + 300), 40)
+            screen.blit(nucleus_surf, (0, 0))
+
+        else:
+            pg.draw.rect(screen, (0, 0, 0), (130, 10, 540, 290), width=5, border_top_left_radius=5,
+                         border_top_right_radius=5)
+            pg.draw.rect(screen, (0, 0, 0), (130, 300, 540, 290), width=5, border_bottom_left_radius=5,
+                         border_bottom_right_radius=5)
+            pg.draw.circle(nucleus_surf, (205, 145, 158, nucleus_alpha), (400, 155), (Radius - 50) / 2)
+            pg.draw.circle(nucleus_surf, (205, 145, 158, nucleus_alpha), (400, 455), (Radius - 50) / 2)
+            pg.draw.circle(nucleus_surf, (200, 155, 200, nucleus_alpha), kernel, 40)
+            pg.draw.circle(nucleus_surf, (200, 155, 200, nucleus_alpha), (kernel[0], kernel[1] + 300), 40)
+            screen.blit(nucleus_surf, (0, 0))
+
+        pg.display.flip()
+        clock.tick(25)
+
+if __name__ == '__main__':
+    num = int(input("»¶Ó­Ê¹ÓÃÏ¸°û·ÖÁÑÑİÊ¾Æ÷\nversion 1.0 2025.4.27\nÈ¾É«ÌåÊıÁ¿£º"))
+    pg.init()
+    screen = pg.display.set_mode((800, 600))
+    SetWindowPos = windll.user32.SetWindowPos
+    SetWindowPos(pg.display.get_wm_info()['window'], -1, 0, 0, 0, 0, 0x0001)
+    pg.display.set_caption('Cell Division')
+    main(num)
+
+
+
+
