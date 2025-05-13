@@ -7,42 +7,43 @@ from ctypes import windll
 
 
 class Chromosome:
-    def __init__(self, target_pos):
+    def __init__(self, target_pos, color, length):
         self.p_list = []
         self.p_list2 = []
         self.p_list3 = []
         self.p_list4 = []
         self.track = []
         self.track2 = []
-        self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        self.color = color
+        self.length = length
 
-        self.start_pos = (random.randint(250, 350), random.randint(150, 450))
+        self.start_pos = (random.randint(250, 450), random.randint(150, 450))
         self.current_pos = self.start_pos
         self.target_pos = target_pos
         self.move_progress = 0.0
 
-    def draw_sector(self, center, length):
+    def draw_sector(self, center):
         self.p_list = [center]
-        center_of_arc1 = int(center[0] - 1.25 * length * math.sin(math.pi / 6)), int(center[1] - 1.25 * length * math.
-                                                                                     cos(math.pi / 6))
+        center_of_arc1 = int(center[0] - 1.25 * self.length * math.sin(math.pi / 6)), int(center[1] - 1.25 * self.length
+                                                                                          * math.cos(math.pi / 6))
         # 染色体绘制基础准备
         for angle in range(29, -1, -1):
-            x = int(center_of_arc1[0] + 1.25 * length * math.sin(math.radians(angle)))
-            y = int(center_of_arc1[1] + 1.25 * length * math.cos(math.radians(angle)))
+            x = int(center_of_arc1[0] + 1.25 * self.length * math.sin(math.radians(angle)))
+            y = int(center_of_arc1[1] + 1.25 * self.length * math.cos(math.radians(angle)))
             self.p_list.append((x, y))  # 第一段染色体弧绘制
 
         # 第二段染色体弧绘制
-        center_of_arc2 = self.p_list[-1][0], self.p_list[-1][1] - 0.15 * length
+        center_of_arc2 = self.p_list[-1][0], self.p_list[-1][1] - 0.15 * self.length
         for angle2 in range(-1, 60):
-            x = int(center_of_arc2[0] - 0.15 * length * math.sin(math.radians(angle2)))
-            y = int(center_of_arc2[1] + 0.15 * length * math.cos(math.radians(angle2)))
+            x = int(center_of_arc2[0] - 0.15 * self.length * math.sin(math.radians(angle2)))
+            y = int(center_of_arc2[1] + 0.15 * self.length * math.cos(math.radians(angle2)))
             self.p_list.append((x, y))
 
         # 第三段染色体弧绘制
-        center_of_arc3 = center_of_arc2[0], center_of_arc2[1] + 0.15 * length
+        center_of_arc3 = center_of_arc2[0], center_of_arc2[1] + 0.15 * self.length
         for angle2 in range(45, -1, -1):
-            x = int(center_of_arc3[0] - 0.15 * length * math.sin(math.radians(angle2)))
-            y = int(center_of_arc3[1] - 0.15 * length * math.cos(math.radians(angle2)))
+            x = int(center_of_arc3[0] - 0.15 * self.length * math.sin(math.radians(angle2)))
+            y = int(center_of_arc3[1] - 0.15 * self.length * math.cos(math.radians(angle2)))
             self.p_list.append((x, y))
 
         # 右下角染色体绘制
@@ -62,14 +63,14 @@ class Chromosome:
             self.track.append((x, 300 - j))
             self.track2.append((x, 300 + j))
 
-    def move(self, length):  # 染色体整体移动
+    def move(self):  # 染色体整体移动
         if self.move_progress < 1.0:
             self.move_progress = min(1.0, self.move_progress + 0.02)
             t = self.move_progress
             x = self.start_pos[0] + (self.target_pos[0] - self.start_pos[0]) * t * t
             y = self.start_pos[1] + (self.target_pos[1] - self.start_pos[1]) * t*t
             self.current_pos = (int(x), int(y))
-            self.draw_sector(self.current_pos, length/2)
+            self.draw_sector(self.current_pos)
 
 
 def movement(chromosomes):
@@ -97,9 +98,11 @@ def main(num):
     move = False
     done = True
     key_stage = 0
-    length = (Radius * 2 - 10) / num
-    Center = position(num, Radius, length, origin)
+    length = (Radius * 2 - 10) / (num * 2)
+    Center = position(num*2, Radius, length, origin)
     chromosomes = []
+    colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for i in range(num)] * 2
+    lengths = [random.randint(-30, 30) + length for k in range(num)] * 2
     nucleus_alpha = 255
 
     l = 1
@@ -116,7 +119,8 @@ def main(num):
                 sys.exit()
             elif event.type == pg.KEYDOWN and event.key == pg.K_RETURN and done:
                 if key_stage == 0:
-                    chromosomes = [Chromosome(pos) for pos in Center]
+                    chromosomes = [Chromosome(Center[q], colors[q], lengths[q] /2)
+                                   for q in range(num*2)]
                     move = True
                     done = False
                     key_stage += 1
@@ -131,13 +135,13 @@ def main(num):
                     nucleus_alpha = max(0, nucleus_alpha - Fade_speed)
                 if key_stage == 1:
                     for index, chromo in enumerate(chromosomes):
-                        chromo.draw_sector(chromo.current_pos, length /2)
+                        chromo.draw_sector(chromo.current_pos)
                     done = True
                 if key_stage == 2:
                     for idx, chromo in enumerate(chromosomes):
-                        chromo.move(length)
+                        chromo.move()
                         if not chromo.track:
-                            chromo.spindle(Radius, num, idx)
+                            chromo.spindle(Radius, num*2, idx)
                         if chromo.move_progress == 1.0 and nucleus_alpha == 0:
                             move = False
                             done = True
@@ -200,14 +204,10 @@ def main(num):
         clock.tick(25)
 
 if __name__ == '__main__':
-    num = int(input("欢迎使用细胞分裂演示器\nversion 1.0 2025.4.27\n染色体数量："))
+    num = int(input("欢迎使用细胞分裂演示器\nversion 1.0 2025.5.13\n染色体对数："))
     pg.init()
     screen = pg.display.set_mode((800, 600))
     SetWindowPos = windll.user32.SetWindowPos
     SetWindowPos(pg.display.get_wm_info()['window'], -1, 0, 0, 0, 0, 0x0001)
     pg.display.set_caption('Cell Division')
     main(num)
-
-
-
-
