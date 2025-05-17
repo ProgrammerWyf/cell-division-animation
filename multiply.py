@@ -101,8 +101,8 @@ def main(num):
     length = (Radius * 2 - 10) / (num * 2)
     Center = position(num*2, Radius, length, origin)
     chromosomes = []
-    colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for i in range(num)] * 2
-    lengths = [random.randint(-30, 30) + length for k in range(num)] * 2
+    colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for i in range(0, 2)]
+    lengths = [random.randint(-50, 50) + length for k in range(num)] * 2
     nucleus_alpha = 255
 
     l = 1
@@ -119,7 +119,7 @@ def main(num):
                 sys.exit()
             elif event.type == pg.KEYDOWN and event.key == pg.K_RETURN and done:
                 if key_stage == 0:
-                    chromosomes = [Chromosome(Center[q], colors[q], lengths[q] /2)
+                    chromosomes = [Chromosome(Center[q], colors[q//num], lengths[q]/2)
                                    for q in range(num*2)]
                     move = True
                     done = False
